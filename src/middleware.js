@@ -22,7 +22,7 @@ export async function middleware(req) {
   // console.log("User ID from token:", userId);
 
   if (!userId) {
-    console.log("User ID is missing in the token:", token);
+    // console.log("User ID is missing in the token:", token);
   }
 
   // Làm mới token nếu gần hết hạn
