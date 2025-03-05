@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 export async function middleware(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  const protectedRoutes = ["/manage-form", "/account"]; // Các route cần bảo vệ
+  const protectedRoutes = ["/energy", "/account"]; // Các route cần bảo vệ
 
   // console.log("Token:", token); // Kiểm tra token có được trả về không
 

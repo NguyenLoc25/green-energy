@@ -1,64 +1,57 @@
 "use client";
-import { useEffect, useState } from "react";
-import { db, ref, get, auth } from "@/lib/firebaseConfig"; // Import auth để kiểm tra người dùng hiện tại
-import { onAuthStateChanged } from "firebase/auth";
 
-export default function HomePage() {
-  const [databaseData, setDatabaseData] = useState(null);
-  const [user, setUser] = useState(null);
+import { useEffect, useState } from "react";
+import { auth, db, ref, get } from "@/lib/firebaseConfig";
+
+const HomePage = () => {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Lắng nghe trạng thái đăng nhập
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
+      if (currentUser) {
+        await fetchData(currentUser.email);
+      } else {
+        setData(null);
+      }
     });
 
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const fetchDatabaseData = async () => {
-      if (!user) {
-        console.log("Người dùng chưa đăng nhập.");
-        return;
+  const fetchData = async (userEmail) => {
+    setLoading(true);
+    let dataPath = "";
+
+    if (userEmail === "energy@project.com") dataPath = "energy";
+    if (userEmail === "waste@project.com") dataPath = "waste";
+    if (userEmail === "home@project.com") dataPath = "home";
+    if (userEmail === "garden@project.com") dataPath = "garden";
+
+    if (dataPath) {
+      const dataRef = ref(db, dataPath);
+      const snapshot = await get(dataRef);
+      if (snapshot.exists()) {
+        setData(snapshot.val());
+      } else {
+        setData("Không có dữ liệu.");
       }
+    }
+    setLoading(false);
+  };
 
-      if (!user.email.endsWith("@project.com")) {
-        console.log("Bạn không có quyền truy cập cơ sở dữ liệu.");
-        return;
-      }
-
-      try {
-        const snapshot = await get(ref(db, "/home")); // Lấy toàn bộ database
-        if (snapshot.exists()) {
-          setDatabaseData(snapshot.val());
-        } else {
-          console.log("Không có dữ liệu trong Realtime Database.");
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu từ Firebase:", error);
-      }
-    };
-
-    if (user) fetchDatabaseData();
-  }, [user]);
-
-  if (loading) return <p>Đang kiểm tra quyền truy cập...</p>;
+  if (!user) return <p>Vui lòng đăng nhập.</p>;
+  if (loading) return <p>Đang tải dữ liệu...</p>;
 
   return (
     <div>
-      <h1>Dữ liệu từ Realtime Database</h1>
-      {user ? (
-        databaseData ? (
-          <pre>{JSON.stringify(databaseData, null, 2)}</pre>
-        ) : (
-          <p>Đang tải dữ liệu...</p>
-        )
-      ) : (
-        <p>Vui lòng đăng nhập để xem dữ liệu.</p>
-      )}
+      <h2>Xin chào, {user.email}</h2>
+      <h3>Dữ liệu của bạn:</h3>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
     </div>
   );
-}
+};
+
+export default HomePage;

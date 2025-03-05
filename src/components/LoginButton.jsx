@@ -1,48 +1,42 @@
 "use client";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { signInWithGoogle, getUserInfo } from "@/lib/user";
 
 export default function LoginButton() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleEmailSignIn = async () => {
+  useEffect(() => {
+    const fetchUser = async () => {
+      const currentUser = await getUserInfo();
+      setUser(currentUser);
+    };
+    fetchUser();
+  }, []);
+
+  const handleGoogleLogin = async () => {
     try {
-      const result = await signIn("credentials", { 
-        email, 
-        password, 
-        redirect: false 
-      });
+      // Đăng nhập vào Firebase trước
+      const firebaseUser = await signInWithGoogle();
+      setUser(firebaseUser);
 
-      if (result.error) {
-        alert("Đăng nhập thất bại: " + result.error);
-      } else {
-        alert("Đăng nhập thành công!");
-      }
-    } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
+
+      // Chuyển hướng sau khi đăng nhập thành công
+      router.push("/");
+    } catch (err) {
+      setError(err.message);
+      console.error("Lỗi đăng nhập Google:", err);
     }
   };
 
   return (
-    <div>
-      <button onClick={() => signIn("google")}>Sign in with Google</button>
-      
-      <div>
-        <input 
-          type="email" 
-          placeholder="Email" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
-        />
-        <input 
-          type="password" 
-          placeholder="Password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
-        />
-        <button onClick={handleEmailSignIn}>Sign in with Email</button>
-      </div>
-    </div>
+    <button 
+      onClick={handleGoogleLogin} 
+      className="bg-red-500 text-white p-2 rounded mt-2 hover:bg-red-600 transition-all"
+    >
+      Đăng nhập với Google
+    </button>
   );
 }
