@@ -1,22 +1,29 @@
-// "use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
-// import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import LogoutButton from "@/components/LogoutButton";
 import LoginButton from "@/components/LoginButton";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../app/api/auth/[...nextauth]/route";
+import { auth } from "@/lib/firebaseConfig";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
-const Header = async () => {
-    const session = await getServerSession(authOptions);
-    const isAuth = !!session;
+const Header = () => {
+  const [user, setUser] = useState(null);
 
-    console.log("Auth status:", isAuth);
+  // Theo dõi trạng thái đăng nhập của Firebase
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
+
   return (
     <header className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-b-2 shadow-lg py-3 px-5 md:px-10 lg:px-20">
       <div className="flex justify-between items-center w-full">
@@ -49,44 +56,42 @@ const Header = async () => {
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-
-
         
         {/* Account Section */}
-        {isAuth ? (
+        {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="flex items-center gap-3 cursor-pointer">
                 <Avatar>
-                  <AvatarImage src={session.user?.image || "/default-avatar.png"} />
-                  <AvatarFallback>{session.user?.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                  <AvatarImage src={user.photoURL || "/default-avatar.png"} />
+                  <AvatarFallback>{user.displayName?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:block text-sm">{session.user?.name || "User"}</span>
+                <span className="hidden sm:block text-sm">{user.displayName || user.email}</span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mt-2 w-40">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => signOut(auth)}>
                 <LogoutButton />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="px-4 py-2 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-200 transition-all">
-                Đăng nhập
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-md overflow-hidden">
-                <DropdownMenuItem>
-                  <Link href="/login">
-                    <span className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Đăng nhập với tư cách nhà phát triển</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <LoginButton />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="px-4 py-2 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-200 transition-all">
+              Đăng nhập
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-md overflow-hidden">
+              <DropdownMenuItem>
+                <Link href="/login">
+                  <span className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Đăng nhập với email</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <LoginButton />
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   );
