@@ -21,7 +21,7 @@ const Header = () => {
       setUser(user);
     });
 
-    return () => unsubscribe(); // Cleanup listener
+    return () => unsubscribe(); //   Cleanup listener
   }, []);
 
   return (
@@ -41,9 +41,9 @@ const Header = () => {
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/manage-form" passHref>
+              <Link href="/manage-data" passHref>
                 <span className={cn(navigationMenuTriggerStyle(), "menu-item font-bold text-lg hover:bg-purple-600 hover:scale-110 transition-all")}>
-                  Manage Forms
+                  Manage Data
                 </span>
               </Link>
             </NavigationMenuItem>
